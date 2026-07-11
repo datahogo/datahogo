@@ -91,22 +91,37 @@ datahogo scan --explain
 
 ## Use it in CI
 
-Data Hogo exits with a non-zero code when it finds issues at or above the severity you choose, so it drops straight into any pipeline:
+### GitHub Action
 
 ```yaml
 # .github/workflows/security.yml
 name: Security
 on: [push, pull_request]
+permissions:
+  contents: read
+  security-events: write
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npx datahogo scan --fail-on high --sarif > results.sarif
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - uses: datahogo/datahogo@main
         with:
-          sarif_file: results.sarif
+          fail-on: high
+```
+
+Findings show up in your repository's **Security** tab automatically. See [`action.yml`](action.yml) for every input (`path`, `url`, `upload-sarif`).
+
+### Any other CI
+
+Data Hogo exits with a non-zero code when it finds issues at or above the severity you choose, so it drops straight into any pipeline:
+
+```yaml
+- run: npx datahogo scan --fail-on high --sarif > results.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: results.sarif
 ```
 
 The SARIF output shows up in your repository's **Security** tab.
@@ -124,6 +139,27 @@ datahogo doctor               Check optional external tools
   --explain                   AI explanations (requires ANTHROPIC_API_KEY)
   --all                       Include informational / non-production findings
   --help, --version
+```
+
+## Use it from Claude Code, Cursor, or Claude Desktop (MCP)
+
+`@datahogo/mcp` exposes the same scan engine as MCP tools, so your agent can scan a project, pull a specific finding, check a deployed URL, or review Supabase/Firebase rules — and write the explanation and fix itself, at no AI cost to you.
+
+```bash
+claude mcp add datahogo -- npx -y @datahogo/mcp
+```
+
+For Cursor or another MCP client, point it at the same command: `npx -y @datahogo/mcp`, stdio transport.
+
+Tools: `scan_project`, `get_finding`, `scan_url`, `check_db_rules`.
+
+Prefer a lighter footprint in Claude Code specifically? Install the
+[Claude Code skill](skills/datahogo) instead — it just teaches the agent to
+run `npx datahogo scan --json` and interpret the output, no MCP server
+process required:
+
+```bash
+npx skills add datahogo/datahogo/skills/datahogo
 ```
 
 ## Data Hogo Cloud
@@ -228,22 +264,37 @@ datahogo scan --explain
 
 ## Úsalo en CI
 
-Data Hogo termina con un código distinto de cero cuando encuentra problemas de la severidad que elijas, así que encaja en cualquier pipeline:
+### GitHub Action
 
 ```yaml
 # .github/workflows/security.yml
 name: Security
 on: [push, pull_request]
+permissions:
+  contents: read
+  security-events: write
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npx datahogo scan --fail-on high --sarif > results.sarif
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - uses: datahogo/datahogo@main
         with:
-          sarif_file: results.sarif
+          fail-on: high
+```
+
+Los hallazgos aparecen automáticamente en la pestaña **Security** de tu repositorio. Ve [`action.yml`](action.yml) para todas las opciones (`path`, `url`, `upload-sarif`).
+
+### Cualquier otro CI
+
+Data Hogo termina con un código distinto de cero cuando encuentra problemas de la severidad que elijas, así que encaja en cualquier pipeline:
+
+```yaml
+- run: npx datahogo scan --fail-on high --sarif > results.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: results.sarif
 ```
 
 El resultado SARIF aparece en la pestaña **Security** de tu repositorio.
@@ -261,6 +312,27 @@ datahogo doctor               Revisa las herramientas externas opcionales
   --explain                   Explicaciones con AI (requiere ANTHROPIC_API_KEY)
   --all                       Incluye hallazgos informativos / no productivos
   --help, --version
+```
+
+## Úsalo desde Claude Code, Cursor o Claude Desktop (MCP)
+
+`@datahogo/mcp` expone el mismo motor de escaneo como tools de MCP, así que tu agente puede escanear un proyecto, consultar un hallazgo específico, revisar una URL desplegada o auditar reglas de Supabase/Firebase — y escribir la explicación y el arreglo él mismo, sin costo de AI para ti.
+
+```bash
+claude mcp add datahogo -- npx -y @datahogo/mcp
+```
+
+Para Cursor u otro cliente MCP, apúntalo al mismo comando: `npx -y @datahogo/mcp`, transporte stdio.
+
+Tools: `scan_project`, `get_finding`, `scan_url`, `check_db_rules`.
+
+¿Prefieres algo más ligero específicamente en Claude Code? Instala el
+[skill de Claude Code](skills/datahogo) en su lugar — solo le enseña al
+agente a correr `npx datahogo scan --json` e interpretar la salida, sin
+necesidad de un proceso de servidor MCP:
+
+```bash
+npx skills add datahogo/datahogo/skills/datahogo
 ```
 
 ## Data Hogo Cloud

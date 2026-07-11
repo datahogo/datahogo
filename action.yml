@@ -1,0 +1,71 @@
+name: "Data Hogo Security Scan"
+description: "Open-source security scanner. Runs locally in your CI runner — nothing is uploaded to a third-party server. Findings appear in your repository's Security tab."
+author: "Data Hogo"
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  path:
+    description: "Directory to scan, relative to the repo root."
+    required: false
+    default: "."
+  fail-on:
+    description: "Fail the step if findings at or above this severity exist (critical|high|medium|low). Leave empty to never fail the build."
+    required: false
+    default: ""
+  url:
+    description: "Optional deployed URL to also scan (headers, SSL, CORS)."
+    required: false
+    default: ""
+  upload-sarif:
+    description: "Upload results to GitHub Code Scanning (Security tab)."
+    required: false
+    default: "true"
+
+outputs:
+  sarif-path:
+    description: "Path to the generated SARIF file."
+    value: ${{ steps.scan.outputs.sarif-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Run datahogo scan
+      id: scan
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        SCAN_URL: ${{ inputs.url }}
+      run: |
+        set +e
+        ARGS=("scan" "${{ inputs.path }}" "--sarif")
+        if [ -n "$FAIL_ON" ]; then
+          ARGS+=("--fail-on" "$FAIL_ON")
+        fi
+        if [ -n "$SCAN_URL" ]; then
+          ARGS+=("--url" "$SCAN_URL")
+        fi
+
+        npx --yes datahogo "${ARGS[@]}" > datahogo-results.sarif
+        SCAN_EXIT=$?
+
+        echo "sarif-path=datahogo-results.sarif" >> "$GITHUB_OUTPUT"
+
+        if [ $SCAN_EXIT -eq 1 ]; then
+          echo "::error::datahogo found findings at or above the '$FAIL_ON' threshold."
+        elif [ $SCAN_EXIT -gt 1 ]; then
+          echo "::error::datahogo scan failed to run (exit code $SCAN_EXIT)."
+        fi
+        exit $SCAN_EXIT
+
+    - name: Upload SARIF to GitHub Code Scanning
+      if: always() && inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif-path }}

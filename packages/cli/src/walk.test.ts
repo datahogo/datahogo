@@ -53,4 +53,20 @@ describe("walkDirectory", () => {
     expect(files.has("big.ts")).toBe(false);
     expect(skippedLarge).toContain("big.ts");
   });
+
+  it("does not follow symlinks that escape the scan root", async () => {
+    const outsideDir = await fs.mkdtemp(path.join(os.tmpdir(), "datahogo-outside-"));
+    await fs.writeFile(path.join(outsideDir, "leak.txt"), "SECRET_OUTSIDE_ROOT");
+    try {
+      await fs.symlink(path.join(outsideDir, "leak.txt"), path.join(tempDir, "evil-link.ts"));
+      await fs.symlink(outsideDir, path.join(tempDir, "evil-link-dir"));
+
+      const { files } = await walkDirectory(tempDir);
+      expect(files.has("evil-link.ts")).toBe(false);
+      expect([...files.keys()].some((k) => k.startsWith("evil-link-dir"))).toBe(false);
+      expect([...files.values()].some((v) => v.includes("SECRET_OUTSIDE_ROOT"))).toBe(false);
+    } finally {
+      await fs.rm(outsideDir, { recursive: true, force: true });
+    }
+  });
 });

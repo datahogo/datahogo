@@ -1,6 +1,7 @@
 {
   "name": "@datahogo/mcp",
-  "version": "0.1.2",
+  "mcpName": "io.github.datahogo/datahogo",
+  "version": "0.1.3",
   "description": "MCP server for Data Hogo \u2014 lets Claude, Cursor, and other MCP clients scan a project for security issues directly.",
   "license": "AGPL-3.0-only",
   "repository": {

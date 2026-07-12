@@ -1,5 +1,5 @@
 name: "Data Hogo Security Scan"
-description: "Open-source security scanner. Runs locally in your CI runner — nothing is uploaded to a third-party server. Findings appear in your repository's Security tab."
+description: "Open-source security scanner for CI. Runs locally in your runner; findings appear in your repo Security tab."
 author: "Data Hogo"
 branding:
   icon: "shield"
